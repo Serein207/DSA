@@ -2,7 +2,6 @@ module;
 #include <utility>
 
 export module List;
-import <exception>;
 import Exception;
 
 export template <typename Object>
@@ -255,7 +254,7 @@ List<Object>::iterator List<Object>::insert(iterator itr, const Object& x) {
 
 	Node* p = itr.current;
 	theSize++;
-	return { p->prev = p->prev->next = new Node{x, p->prev,p} };
+	return { p->prev = p->prev->next = new Node{x, p->prev, p} };
 }
 
 template <typename Object>
@@ -280,8 +279,8 @@ List<Object>::iterator List<Object>::erase(List<Object>::iterator itr) {
 
 template <typename Object>
 List<Object>::iterator List<Object>::erase(List<Object>::iterator from, List<Object>::iterator to) {
-	for (iterator itr = from; itr != to; ++itr) 
+	for (iterator itr = from; itr != to; ++itr)
 		itr = erase(itr);
-	
+
 	return to;
 }
