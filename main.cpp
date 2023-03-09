@@ -1,15 +1,9 @@
 import BinarySearchTree;
+import AvlTree;
 import <iostream>;
 
 int main() {
-  BinarySearchTree<int> tree;
-  tree.insert(10);
-  tree.insert(40);
-  tree.insert(30);
+  AvlTree<int> tree;
   tree.insert(20);
-  tree.insert(90);
-  tree.insert(80);
-  std::cout << tree.findMax() << std::endl;
-  tree.remove(80);
-  tree.printTree();
+  //std::cout << tree.findMax() << std::endl;
 }

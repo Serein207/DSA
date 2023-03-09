@@ -196,5 +196,5 @@ BinarySearchTree<Comparable>& BinarySearchTree<Comparable>::operator=(
 template <typename Comparable>
 BinarySearchTree<Comparable>::BinarySearchTree(BinarySearchTree<Comparable>&& rhs)
   : root { nullptr } {
-  root = clone(std::move(rhs).root);
+  root = clone(rhs.root);
 }
