@@ -199,7 +199,6 @@ protected:
 	friend class List<Object>;
 };
 
-
 template <typename Object>
 List<Object>::List() {
 	init();

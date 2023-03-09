@@ -1,14 +1,15 @@
-import List;
+import BinarySearchTree;
 import <iostream>;
 
 int main() {
-	List<int> list;
-	list.push_back(10);
-	list.push_back(20);
-	list.push_back(30);
-	list.push_back(40);
-	list.erase(--list.end());
-	for (auto e : list) {
-		std::cout << e << std::endl;
-	}
+	BinarySearchTree<int> tree;
+	tree.insert(10);
+	tree.insert(40);
+	tree.insert(30);
+	tree.insert(20);
+	tree.insert(90);
+	tree.insert(80);
+	std::cout << tree.findMin() << std::endl;
+	tree.remove(80);
+	tree.printTree();
 }
