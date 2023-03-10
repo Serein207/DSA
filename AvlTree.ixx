@@ -2,6 +2,8 @@ module;
 #include <utility>
 
 export module AvlTree;
+import <iostream>;
+import <stack>;
 
 export template <typename Comparable>
 class AvlTree {
@@ -18,6 +20,10 @@ public:
 	AvlTree& operator=(AvlTree&& rhs) {
 		root = clone(rhs.root);
 		return *this;
+	}
+
+	bool empty() const {
+		return root == nullptr;
 	}
 
 private:
@@ -125,6 +131,8 @@ private:
 	}
 
 	int height(AvlNode* t) {
+		if (t == nullptr)
+			return -1;
 		return t->height;
 	}
 
@@ -190,5 +198,44 @@ public:
 
 	Comparable findMax() const {
 		return findMax(root)->element;
+	}
+
+private:
+	void printTree(AvlNode* t, std::ostream& out) const {
+		std::stack<AvlNode*> s; //辅助栈
+		if (t)
+			s.push(t); //根节点入栈
+		while (!s.empty()) { //在栈变空之前反复循环
+			t = s.top();
+			out << t->element << ' '; //弹出并访问当前节点
+			s.pop();
+
+			//先让右孩子先入栈，再让左孩子入栈
+			if (t->right)
+				s.push(t->right); //右孩子先入后出
+			if (t->left)
+				s.push(t->left); //左孩子后入先出
+		}
+		out << '\n';
+	}
+
+public:
+	void printTree(std::ostream& out = std::cout) const { printTree(root, out); }
+
+private:
+	bool contains(const Comparable& x, AvlNode* t) const {
+		if (t == nullptr)
+			return false;
+		else if (x < t->element)
+			return contains(x, t->left);
+		else if (t->element < x)
+			return contains(x, t->right);
+		else
+			return true;
+	}
+
+public:
+	bool contains(const Comparable& x) const {
+		return contains(x, root);
 	}
 };
