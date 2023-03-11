@@ -5,10 +5,20 @@ import <list>;
 import <string>;
 import <algorithm>;
 
+auto nextPrime(size_t x) {
+	size_t n = x - 1;
+	n |= n >> 1;
+	n |= n >> 2;
+	n |= n >> 4;
+	n |= n >> 8;
+	n |= n >> 16;
+	return n + 1;
+};
+
 export template <typename HashedObj>
 class HashTable {
 public:
-	explicit HashTable(int size = 101) : currentSize { size } { theLists.resize(10); }
+	explicit HashTable(size_t size = 101) : array { nextPrime(size) } { clear(); }
 
 	bool contains(const HashedObj& x) const;
 
@@ -17,10 +27,24 @@ public:
 	bool insert(HashedObj&& x);
 	bool remove(const HashedObj& x);
 
+	enum class EntryType { ACTIVE, EMPTY, DELETED };
+
 private:
-	std::vector<std::list<HashedObj>> theLists;
+	struct HashEntry {
+		HashedObj element;
+		EntryType info;
+
+		HashEntry(const HashedObj& e = HashedObj {}, EntryType i = EntryType::EMPTY)
+			: element { e }, info { i } {}
+		HashEntry(HashedObj&& e, EntryType i = EntryType::EMPTY)
+			: element { std::move(e) }, info { i } {}
+	};
+
+	std::vector<HashEntry> array;
 	int currentSize;
 
+	bool isActive(int currentPos) const;
+	int findPos(const HashedObj& x) const;
 	void rehash();
 	size_t myhash(const HashedObj& x) const;
 };
@@ -49,65 +73,55 @@ public:
 template <typename HashedObj>
 size_t HashTable<HashedObj>::myhash(const HashedObj& x) const {
 	static hash<HashedObj> hf;
-	return hf(x) % theLists.size();
+	return hf(x) % array.size();
 }
 
 template <typename HashedObj>
 void HashTable<HashedObj>::rehash() {
-	std::vector<std::list<HashedObj>> oldLists = theLists;
+	std::vector<HashEntry> oldArray = array;
 
-	auto nextPrime = [](size_t x) {
-		size_t n = x - 1;
-		n |= n >> 1;
-		n |= n >> 2;
-		n |= n >> 4;
-		n |= n >> 8;
-		n |= n >> 16;
-		return n + 1;
-	};
-	theLists.resize(nextPrime(2 * theLists.size()));
-	for (auto& theList : theLists)
-		theList.clear();
+	array.resize(nextPrime(2 * oldArray.size()));
+	for (auto& entry : array)
+		entry.info = EntryType::EMPTY;
 
 	currentSize = 0;
-	for (auto& theList : theLists)
-		for (auto& x : theList)
-			insert(std::move(x));
+	for (auto& entry : oldArray)
+		if (entry.info == EntryType::ACTIVE)
+			insert(std::move(entry.element));
 }
 
 template <typename HashedObj>
 void HashTable<HashedObj>::clear() {
-	for (auto& theList : theLists)
-		theList.clear();
+	currentSize = 0;
+	for (auto& entry : array)
+		entry.info = EntryType::EMPTY;
 }
 
 template <typename HashedObj>
 bool HashTable<HashedObj>::contains(const HashedObj& x) const {
-	auto& whichList = theLists[myhash(x)];
-	return { std::find(begin(whichList), end(whichList), x) != end(whichList) };
+	return isActive(findPos(x));
 }
 
 template <typename HashedObj>
 bool HashTable<HashedObj>::remove(const HashedObj& x) {
-	auto& whichList = theLists[myhash(x)];
-	auto itr = std::find(begin(whichList), end(whichList), x);
-
-	if (itr == end(whichList))
+	int currentPos = findPos(x);
+	if (!isActive(currentPos))
 		return false;
 
-	whichList.erase(itr);
-	--currentSize;
+	array[currentPos].info = EntryType::DELETED;
 	return true;
 }
 
 template <typename HashedObj>
 bool HashTable<HashedObj>::insert(const HashedObj& x) {
-	auto& whichList = theLists[myhash(x)];
-	if (std::find(begin(whichList), end(whichList), x) != end(whichList))
+	int currentPos = findPos(x);
+	if (isActive(currentPos))
 		return false;
-	whichList.push_back(x);
 
-	if (++currentSize > theLists.size())
+	array[currentPos].element = x;
+	array[currentPos].info = EntryType::ACTIVE;
+
+	if (++currentSize > array.size() / 2)
 		rehash();
 
 	return true;
@@ -115,14 +129,34 @@ bool HashTable<HashedObj>::insert(const HashedObj& x) {
 
 template <typename HashedObj>
 bool HashTable<HashedObj>::insert(HashedObj&& x) {
-	auto& whichList = theLists[myhash(std::move(x))];
-	if (std::find(begin(whichList), end(whichList), std::move(x)) != end(whichList))
+	int currentPos = findPos(x);
+	if (isActive(currentPos))
 		return false;
-	whichList.push_back(std::move(x));
 
-	if (++currentSize > theLists.size())
+	array[currentPos].element = std::move(x);
+	array[currentPos].info = EntryType::ACTIVE;
+
+	if (++currentSize > array.size() / 2)
 		rehash();
 
 	return true;
 }
 
+template <typename HashedObj>
+bool HashTable<HashedObj>::isActive(int currentPos) const {
+	return array[currentPos].info == EntryType::ACTIVE;
+}
+
+template <typename HashedObj>
+int HashTable<HashedObj>::findPos(const HashedObj& x) const {
+	int offset = 1;
+	int currentPos = myhash(x);
+
+	while (array[currentPos].info != EntryType::EMPTY &&
+		array[currentPos].element != x) {
+		currentPos += offset;
+		if (currentPos >= array.size())
+			currentPos -= array.size();
+	}
+	return currentPos;
+}

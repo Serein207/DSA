@@ -1,12 +1,11 @@
-import HashTable;
+import CuckooHashTable;
 import <iostream>;
 
 int main() {
-	HashTable<int> tree;
-	tree.insert(20);
-	tree.insert(30);
-	tree.insert(40);
-	tree.insert(10);
-	tree.remove(10);
-	
+	CuckooHashTable<std::string, StringHashFamily<6>> tree;
+	tree.insert("10");
+	tree.insert("30");
+	tree.insert("40");
+	tree.insert("10");
+	tree.remove("10");
 }
